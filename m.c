@@ -55,8 +55,6 @@ static void my_init(void) {
 void (*__malloc_initialize_hook) (void) = my_init;
 
 int main() {
-  FILE *fd = fopen("./m.c", "r");
-  fclose(fd);
   void *m = malloc(65536);
-  memset(m, 0, 65536);
+  memset(m, 0, 65536+1);
 }
