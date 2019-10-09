@@ -41,9 +41,14 @@ static void my_free(void *ptr, const void *caller) {
         void *tail = ptr + node->size;
         mprotect(tail, PAGE_SIZE, PROT_WRITE | PROT_READ);
 
+#if 0   //todo:不明白为什么这里 orig_free为NULL
+        orig_free(node->head, NULL);
+#else
+        //todo:理论上这样写有并发问题
         __free_hook = orig_free;
         free(node->head);
         __free_hook = my_free;
+#endif
     }
 }
 
