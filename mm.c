@@ -10,6 +10,7 @@ uint64_t upper_align(const uint64_t size, const uint64_t align) {
 }
 
 void (*orig_free) (void *__ptr , const void *);
+void *(*orig_memalign)(size_t boundary, size_t size);
 
 typedef struct Node {
     void *head;
@@ -19,7 +20,7 @@ typedef struct Node {
 static void *my_alloc(size_t size, const void *caller) {
     uint64_t alloc_size = upper_align(size + sizeof(Node), PAGE_SIZE) + PAGE_SIZE;
 
-    void *head = memalign(PAGE_SIZE, alloc_size);
+    void *head = orig_memalign(PAGE_SIZE, alloc_size);
     assert(NULL != head);
 
     void *tail = head + alloc_size - PAGE_SIZE;
@@ -46,10 +47,36 @@ static void my_free(void *ptr, const void *caller) {
     }
 }
 
+static void *my_memalign(size_t boundary, size_t size) {
+    //todo:这里不正确, 需要时再改
+    return malloc(size);
+}
+
+static void *my_realloc(void * oldBuffer ,size_t newSize, void * caller) {
+    void *newBuffer = my_alloc(newSize, NULL);
+    if (oldBuffer) {
+        Node *node = (Node*)(oldBuffer - sizeof(Node));
+        size_t size = node->size;
+        if (newSize < size) {
+            size = newSize;
+        }
+        if (size > 0) {
+            memcpy(newBuffer, oldBuffer, size);
+        }
+        my_free(oldBuffer, NULL);
+    }
+    return newBuffer;
+}
+
 static void my_init(void) {
     __malloc_hook = my_alloc;
     orig_free = __free_hook;
     __free_hook = my_free;
+
+    orig_memalign = __memalign_hook;
+    __memalign_hook = my_memalign;
+
+    __realloc_hook = my_realloc;
 }
 
 void (*__malloc_initialize_hook) (void) = my_init;

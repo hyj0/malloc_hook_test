@@ -52,9 +52,12 @@ static void my_init(void) {
   __free_hook = my_free;
 }
 
-void (*__malloc_initialize_hook) (void) = my_init;
+//void (*__malloc_initialize_hook) (void) = my_init;
 
 int main() {
   void *m = malloc(65536);
   memset(m, 0, 65536+1);
 }
+// mkdir build; cd build; cmake ../; make
+// LD_PRELOAD=./libmm.so gdb ./m
+// (gdb) p *(Node*)(m-sizeof(Node))
